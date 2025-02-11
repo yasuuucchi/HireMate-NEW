@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model JobRequirement {
+  id              String   @id @default(cuid())
+  positionName    String
+  requiredSkills  String[] // PostgreSQLのarray型を使用
+  niceToHaveSkills String[]
+  experienceYears Int
+  numberOfOpenings Int
+  employmentType  String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model CultureValue {
+  id          String   @id @default(cuid())
+  title       String
+  importance  Int      // 0-100
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Candidate {
+  id               String   @id @default(cuid())
+  name             String
+  email            String
+  phone            String
+  resumeUrl        String?
+  status           String
+  skillScore       Float?
+  cultureScore     Float?
+  achievementScore Float?
+  potentialScore   Float?
+  totalScore       Float?
+  rank             String?  // A, B, C
+  resumeSummary    String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  interviewSheets  InterviewSheet[]
+  careerMilestones CareerMilestone[]
+}
+
+model CareerMilestone {
+  id          String    @id @default(cuid())
+  startDate   DateTime
+  endDate     DateTime?
+  role        String
+  description String    @db.Text
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model InterviewSheet {
+  id          String             @id @default(cuid())
+  candidate   Candidate          @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String
+  questions   InterviewQuestion[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model InterviewQuestion {
+  id               String         @id @default(cuid())
+  text             String        @db.Text
+  goodAnswerExample String       @db.Text
+  badAnswerExample  String       @db.Text
+  rating           Int?
+  note             String?       @db.Text
+  interviewSheet   InterviewSheet @relation(fields: [interviewSheetId], references: [id], onDelete: Cascade)
+  interviewSheetId String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model EvaluationWeight {
+  id               String   @id @default(cuid())
+  skillWeight      Int      // 0-100
+  cultureWeight    Int      // 0-100
+  achievementWeight Int     // 0-100
+  potentialWeight  Int      // 0-100
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

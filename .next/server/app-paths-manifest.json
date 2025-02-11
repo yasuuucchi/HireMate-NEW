@@ -1,0 +1,6 @@
+{
+  "/company-settings/evaluation-weights/page": "app/company-settings/evaluation-weights/page.js",
+  "/api/evaluation-weights/route": "app/api/evaluation-weights/route.js",
+  "/page": "app/page.js",
+  "/company-settings/page": "app/company-settings/page.js"
+}
