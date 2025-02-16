@@ -6,13 +6,13 @@ import { ZodError } from "zod"
 export async function GET() {
   try {
     // 最初のレコードを取得（存在しない場合はデフォルト値を返す）
-    let weights = await prisma.evaluationWeight.findFirst({
+    let weights = await prisma.evaluationWeights.findFirst({
       orderBy: { createdAt: "desc" },
     })
 
     if (!weights) {
       // デフォルト値で新しいレコードを作成
-      weights = await prisma.evaluationWeight.create({
+      weights = await prisma.evaluationWeights.create({
         data: {
           skillWeight: 25,
           cultureWeight: 25,
@@ -42,20 +42,20 @@ export async function PUT(request: Request) {
     console.log('Validated data:', validatedData);
 
     // 既存のレコードを取得
-    const existingWeights = await prisma.evaluationWeight.findFirst({
+    const existingWeights = await prisma.evaluationWeights.findFirst({
       orderBy: { createdAt: "desc" },
     })
 
     let weights
     if (existingWeights) {
       // 既存のレコードを更新
-      weights = await prisma.evaluationWeight.update({
+      weights = await prisma.evaluationWeights.update({
         where: { id: existingWeights.id },
         data: validatedData,
       })
     } else {
       // 新規レコードを作成
-      weights = await prisma.evaluationWeight.create({
+      weights = await prisma.evaluationWeights.create({
         data: validatedData,
       })
     }

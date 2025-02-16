@@ -4,55 +4,50 @@
 
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased;
-  }
-}
-
-@layer components {
-  .card {
-    @apply p-6 sm:p-8 rounded-xl border bg-background transition-all duration-200;
+    @apply bg-white font-sans text-gray-900;
   }
 
-  .card-hover {
-    @apply hover:shadow-lg hover:border-primary hover:scale-[1.02];
+  h1 {
+    @apply text-4xl font-bold text-primary mb-6;
   }
 
-  .btn {
-    @apply px-6 py-2.5 rounded-lg transition-all duration-200 inline-flex items-center gap-2;
+  h2 {
+    @apply text-2xl font-semibold text-primary mb-4;
   }
 
-  .btn-primary {
-    @apply bg-primary text-white hover:bg-primary-light;
-  }
-
-  .heading {
-    @apply font-bold text-primary;
-  }
-
-  .text-gradient {
-    @apply bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent;
-  }
-
-  .nav-link {
-    @apply text-muted hover:text-primary font-medium transition-smooth relative;
-  }
-
-
-  .nav-link-underline {
-    @apply absolute -bottom-[1.5px] left-0 w-0 h-0.5 bg-primary transition-smooth group-hover:w-full;
+  h3 {
+    @apply text-xl font-medium text-primary mb-3;
   }
 }
 
 @layer utilities {
-  .transition-smooth {
-    @apply transition-all duration-200 ease-in-out;
+  .card {
+    @apply bg-white rounded-lg shadow-md p-6 transition-all duration-200 hover:shadow-lg;
   }
 
-  .hover-scale {
-    @apply hover:scale-[1.02] transition-smooth;
+  .section {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12;
   }
 
-  .card-shadow {
-    @apply shadow-sm hover:shadow-md transition-smooth;
+  .btn-hover {
+    @apply transition-all duration-200 hover:scale-105 hover:shadow-md active:scale-100;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-white hover:bg-primary-light hover:scale-105 hover:shadow-md;
+  }
+
+  .btn-accent {
+    @apply btn bg-accent text-white hover:bg-accent-light hover:scale-105 hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary text-primary hover:bg-secondary-light hover:scale-105 hover:shadow-md;
   }
 }

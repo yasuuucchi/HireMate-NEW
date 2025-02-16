@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { JobRequirementFormData } from "@/lib/schema/job-requirements"
+import { JobRequirementInput } from "@/lib/schema/job-requirements"
 
-interface JobRequirement extends JobRequirementFormData {
+interface JobRequirement extends JobRequirementInput {
   id: string
   createdAt: string
 }
@@ -148,4 +148,4 @@ export default function JobRequirementsList() {
       </div>
     </div>
   )
-} 
+}

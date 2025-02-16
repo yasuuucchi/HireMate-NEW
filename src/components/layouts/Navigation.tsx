@@ -1,41 +1,51 @@
-import React from "react"
-import Link from "next/link"
+'use client';
 
-const Navigation = () => {
-  const menuItems = [
-    { href: "/company-settings", label: "企業設定" },
-    { href: "/candidates", label: "候補者一覧" },
-    { href: "/interview-sheets", label: "面接シート" },
-  ]
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+
+const navItems = [
+  { href: '/company-settings', label: '企業設定' },
+  { href: '/candidates', label: '候補者一覧' },
+  { href: '/interview-sheets', label: '面接シート一覧' },
+  { href: '/interview-sheets/generate', label: '面接質問生成' },
+];
+
+export function Navigation() {
+  const pathname = usePathname();
 
   return (
-    <nav className="bg-background border-b sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link 
-            href="/" 
-            className="heading text-xl flex items-center gap-2 hover:text-primary-light transition-smooth"
-          >
-            <span className="bg-primary text-background px-2 py-1 rounded">H</span>
-            <span>HireMate</span>
-          </Link>
-          <div className="flex gap-8">
-            {menuItems.map((item) => (
-              <div key={item.href} className="group">
+    <nav className="bg-primary shadow-md">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 justify-between">
+          <div className="flex">
+            <div className="flex items-center">
+              <Link
+                href="/"
+                className="text-xl font-bold text-white hover:text-accent transition-colors duration-200"
+              >
+                HireMate
+              </Link>
+            </div>
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              {navItems.map((item) => (
                 <Link
+                  key={item.href}
                   href={item.href}
-                  className="nav-link"
+                  className={cn(
+                    'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-all duration-200',
+                    pathname === item.href
+                      ? 'border-accent text-white'
+                      : 'border-transparent text-gray-200 hover:border-accent-light hover:text-white'
+                  )}
                 >
                   {item.label}
-                  <span className="nav-link-underline" />
                 </Link>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
     </nav>
-  )
+  );
 }
-
-export default Navigation

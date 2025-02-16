@@ -1,38 +1,29 @@
-import { z } from "zod"
+import { z } from "zod";
 
-// 入力データのスキーマ（フォームデータ）
-export const formSchema = z.object({
+export const jobRequirementSchema = z.object({
   positionName: z
     .string()
-    .min(1, "職種名を入力してください")
+    .min(1, "職種名は必須です")
     .max(100, "職種名は100文字以内で入力してください"),
   requiredSkills: z
-    .string()
-    .min(1, "必須スキルを入力してください"),
+    .array(z.string())
+    .min(1, "必須スキルは1つ以上入力してください")
+    .transform((skills) => skills.filter((skill) => skill.trim() !== "")),
   niceToHaveSkills: z
-    .string(),
+    .array(z.string())
+    .transform((skills) => skills.filter((skill) => skill.trim() !== "")),
   experienceYears: z
     .number()
-    .min(0, "0以上の数値を入力してください")
-    .max(50, "50以下の数値を入力してください"),
+    .min(0, "経験年数は0以上で入力してください")
+    .max(50, "経験年数は50以下で入力してください"),
   numberOfOpenings: z
     .number()
-    .min(1, "1以上の数値を入力してください")
-    .max(100, "100以下の数値を入力してください"),
+    .min(1, "募集人数は1以上で入力してください")
+    .max(999, "募集人数は999以下で入力してください"),
   employmentType: z
     .string()
-    .min(1, "雇用形態を選択してください")
-})
+    .min(1, "雇用形態は必須です")
+    .max(50, "雇用形態は50文字以内で入力してください"),
+});
 
-// 変換後のデータスキーマ（Prismaに保存するデータ）
-export const jobRequirementSchema = formSchema.transform((data) => ({
-  ...data,
-  requiredSkills: data.requiredSkills.split("・").map((s) => s.trim()).filter(Boolean),
-  niceToHaveSkills: data.niceToHaveSkills ? data.niceToHaveSkills.split("・").map((s) => s.trim()).filter(Boolean) : [],
-}))
-
-// フォームデータの型
-export type JobRequirementFormData = z.infer<typeof formSchema>
-
-// 変換後のデータ型
-export type JobRequirementData = z.infer<typeof jobRequirementSchema>
+export type JobRequirementInput = z.infer<typeof jobRequirementSchema>;

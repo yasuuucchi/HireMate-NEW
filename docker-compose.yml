@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hiremate_dev
+      POSTGRES_HOST_AUTH_METHOD: trust
+    command: 
+      - "postgres"
+      - "-c"
+      - "shared_buffers=128MB"
+      - "-c"
+      - "max_connections=20"
+      - "-c"
+      - "fsync=off"
+      - "-c"
+      - "synchronous_commit=off"
+      - "-c"
+      - "full_page_writes=off"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/hiremate_dev?schema=public
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./wait-for-it.sh:/app/wait-for-it.sh
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    entrypoint: []
+    command: 
+      - /bin/sh
+      - -c
+      - |
+        npx prisma migrate deploy
+        ./wait-for-it.sh postgres 5432
+        npm run build
+        npm run dev
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=AIzaSyAA0hOSaGRLOmcMGwRZx8VpcQYeF0W_ZM0
+    volumes:
+      - ./ai-service:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

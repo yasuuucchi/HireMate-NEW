@@ -21,29 +21,28 @@ export default function Home() {
   ]
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background to-[#F8FAFC]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-primary/10 to-white">
+      <div className="section">
         <div className="text-center mb-12 sm:mb-16">
-          <h1 className="heading text-4xl sm:text-5xl mb-4 text-gradient">
+          <h1 className="text-5xl sm:text-6xl font-bold text-primary mb-6">
             HireMate
           </h1>
-          <p className="text-xl text-muted max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             AIを活用した次世代の採用支援サービス
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           {features.map((feature) => (
             <Link
               key={feature.href}
               href={feature.href}
-              className="card card-hover relative overflow-hidden group"
+              className="card group hover:bg-primary/5 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-smooth" />
-              <h2 className="heading text-xl mb-3 relative z-10 group-hover:text-primary-light transition-smooth">
+              <h2 className="text-2xl font-semibold text-primary mb-4 group-hover:text-accent group-hover:translate-x-1 transition-all duration-300">
                 {feature.title}
               </h2>
-              <p className="text-muted relative z-10">
+              <p className="text-gray-600">
                 {feature.description}
               </p>
             </Link>

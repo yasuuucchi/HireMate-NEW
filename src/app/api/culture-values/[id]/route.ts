@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { cultureValueSchema } from "@/lib/schema/culture-values"
 import { prisma } from "@/lib/prisma"
+import { handlePrismaError } from "@/lib/prisma-errors"
 
 export async function GET(
   request: Request,
@@ -48,17 +49,7 @@ export async function PUT(
       { status: 200 }
     )
   } catch (error) {
-    console.error(error)
-    if (error.code === "P2025") {
-      return NextResponse.json(
-        { message: "カルチャー・バリューが見つかりません" },
-        { status: 404 }
-      )
-    }
-    return NextResponse.json(
-      { message: "更新に失敗しました" },
-      { status: 400 }
-    )
+    return handlePrismaError(error)
   }
 }
 
@@ -78,16 +69,6 @@ export async function DELETE(
       { status: 200 }
     )
   } catch (error) {
-    console.error(error)
-    if (error.code === "P2025") {
-      return NextResponse.json(
-        { message: "カルチャー・バリューが見つかりません" },
-        { status: 404 }
-      )
-    }
-    return NextResponse.json(
-      { message: "削除に失敗しました" },
-      { status: 500 }
-    )
+    return handlePrismaError(error)
   }
 }

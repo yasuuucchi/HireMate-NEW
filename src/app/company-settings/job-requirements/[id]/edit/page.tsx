@@ -1,244 +1,275 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { jobRequirementSchema, type JobRequirementFormData, type JobRequirementData } from "@/lib/schema/job-requirements"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import CancelButton from "@/components/ui/CancelButton";
+import { FormError } from "@/components/ui/FormError";
+import Link from "next/link";
 
 interface JobRequirement {
-  id: string
-  positionName: string
-  requiredSkills: string[]
-  niceToHaveSkills: string[]
-  experienceYears: number
-  numberOfOpenings: number
-  employmentType: string
-  createdAt: string
+  id: string;
+  positionName: string;
+  requiredSkills: string[];
+  niceToHaveSkills: string[];
+  experienceYears: number;
+  numberOfOpenings: number;
+  employmentType: string;
 }
 
-export default function EditJobRequirement({
+export default function EditJobRequirementPage({
   params,
 }: {
-  params: { id: string }
+  params: { id: string };
 }) {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-  } = useForm<JobRequirementFormData>({
-    resolver: zodResolver(jobRequirementSchema),
-  })
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  const [formData, setFormData] = useState<JobRequirement>({
+    id: params.id,
+    positionName: "",
+    requiredSkills: [""],
+    niceToHaveSkills: [""],
+    experienceYears: 0,
+    numberOfOpenings: 1,
+    employmentType: "",
+  });
 
   useEffect(() => {
     const fetchJobRequirement = async () => {
       try {
-        const response = await fetch(`/api/job-requirements/${params.id}`)
-        if (!response.ok) throw new Error("データの取得に失敗しました")
-        const data: JobRequirement = await response.json()
-        
-        // フォームの初期値を設定
-        reset({
-          positionName: data.positionName,
-          requiredSkills: data.requiredSkills.join(", "),
-          niceToHaveSkills: data.niceToHaveSkills.join(", "),
-          experienceYears: data.experienceYears,
-          numberOfOpenings: data.numberOfOpenings,
-          employmentType: data.employmentType,
-        })
-      } catch (error) {
-        console.error(error)
-        alert("採用要件の取得に失敗しました。")
-        router.push("/company-settings/job-requirements")
+        const response = await fetch(`/api/job-requirements/${params.id}`);
+        if (!response.ok) {
+          throw new Error("採用要件の取得に失敗しました");
+        }
+        const data = await response.json();
+        setFormData({
+          ...data,
+          requiredSkills: [...data.requiredSkills, ""],
+          niceToHaveSkills: [...data.niceToHaveSkills, ""],
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "エラーが発生しました");
       } finally {
-        setIsLoading(false)
+        setInitialLoading(false);
       }
+    };
+
+    fetchJobRequirement();
+  }, [params.id]);
+
+  const handleSkillChange = (
+    index: number,
+    value: string,
+    field: "requiredSkills" | "niceToHaveSkills"
+  ) => {
+    const newSkills = [...formData[field]];
+    newSkills[index] = value;
+
+    // 最後の入力欄に値が入力された場合、新しい入力欄を追加
+    if (index === newSkills.length - 1 && value !== "") {
+      newSkills.push("");
     }
 
-    fetchJobRequirement()
-  }, [params.id, reset, router])
+    // 空の入力欄が連続する場合、余分な入力欄を削除
+    const lastNonEmptyIndex = newSkills
+      .map((skill, i) => (skill !== "" ? i : -1))
+      .filter((i) => i !== -1)
+      .pop();
 
-  const onSubmit = async (data: JobRequirementFormData) => {
+    const trimmedSkills =
+      lastNonEmptyIndex !== undefined
+        ? newSkills.slice(0, lastNonEmptyIndex + 2)
+        : [""];
+
+    setFormData({ ...formData, [field]: trimmedSkills });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
     try {
       const response = await fetch(`/api/job-requirements/${params.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      
+        body: JSON.stringify({
+          ...formData,
+          experienceYears: Number(formData.experienceYears),
+          numberOfOpenings: Number(formData.numberOfOpenings),
+          requiredSkills: formData.requiredSkills.filter((skill) => skill !== ""),
+          niceToHaveSkills: formData.niceToHaveSkills.filter(
+            (skill) => skill !== ""
+          ),
+        }),
+      });
+
       if (!response.ok) {
-        throw new Error("更新に失敗しました")
+        const data = await response.json();
+        throw new Error(data.error || "エラーが発生しました");
       }
 
-      const result = await response.json()
-      alert(result.message)
-      router.push("/company-settings/job-requirements")
-    } catch (error) {
-      console.error(error)
-      alert("エラーが発生しました。もう一度お試しください。")
+      router.push("/company-settings/job-requirements");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "エラーが発生しました");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background to-[#F8FAFC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">読み込み中...</div>
-        </div>
-      </div>
-    )
+  if (initialLoading) {
+    return <div>Loading...</div>;
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background to-[#F8FAFC]">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h1 className="heading text-3xl sm:text-4xl mb-4">採用要件の編集</h1>
-          <p className="text-lg text-muted">
-            採用要件の内容を編集します。
-          </p>
-        </div>
+    <div className="container mx-auto py-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">
+          採用要件の編集
+        </h1>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* 職種名 */}
-          <div className="card">
-            <label htmlFor="positionName" className="block heading text-lg mb-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && <FormError message={error} />}
+
+          <div>
+            <label
+              htmlFor="positionName"
+              className="block text-sm font-medium text-gray-700"
+            >
               職種名
             </label>
             <input
               type="text"
               id="positionName"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-smooth"
-              placeholder="例: フロントエンドエンジニア"
-              {...register("positionName")}
+              value={formData.positionName}
+              onChange={(e) =>
+                setFormData({ ...formData, positionName: e.target.value })
+              }
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              required
             />
-            {errors.positionName && (
-              <p className="mt-2 text-sm text-red-500">{errors.positionName.message}</p>
-            )}
           </div>
 
-          {/* 必須スキル */}
-          <div className="card">
-            <label htmlFor="requiredSkills" className="block heading text-lg mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
               必須スキル
             </label>
-            <textarea
-              id="requiredSkills"
-              rows={3}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-smooth"
-              placeholder="例: React, TypeScript, Next.js"
-              {...register("requiredSkills")}
-            />
-            <p className="mt-2 text-sm text-muted">
-              カンマ区切りで複数入力できます
-            </p>
-            {errors.requiredSkills && (
-              <p className="mt-2 text-sm text-red-500">{errors.requiredSkills.message}</p>
-            )}
+            <div className="space-y-2">
+              {formData.requiredSkills.map((skill, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  value={skill}
+                  onChange={(e) =>
+                    handleSkillChange(index, e.target.value, "requiredSkills")
+                  }
+                  placeholder={`必須スキル ${index + 1}`}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              ))}
+            </div>
           </div>
 
-          {/* 歓迎スキル */}
-          <div className="card">
-            <label htmlFor="niceToHaveSkills" className="block heading text-lg mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
               歓迎スキル
             </label>
-            <textarea
-              id="niceToHaveSkills"
-              rows={3}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-smooth"
-              placeholder="例: GraphQL, AWS, Docker"
-              {...register("niceToHaveSkills")}
-            />
-            <p className="mt-2 text-sm text-muted">
-              カンマ区切りで複数入力できます
-            </p>
-            {errors.niceToHaveSkills && (
-              <p className="mt-2 text-sm text-red-500">{errors.niceToHaveSkills.message}</p>
-            )}
+            <div className="space-y-2">
+              {formData.niceToHaveSkills.map((skill, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  value={skill}
+                  onChange={(e) =>
+                    handleSkillChange(index, e.target.value, "niceToHaveSkills")
+                  }
+                  placeholder={`歓迎スキル ${index + 1}`}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+              ))}
+            </div>
           </div>
 
-          {/* 経験年数 */}
-          <div className="card">
-            <label htmlFor="experienceYears" className="block heading text-lg mb-4">
-              必要経験年数
+          <div>
+            <label
+              htmlFor="experienceYears"
+              className="block text-sm font-medium text-gray-700"
+            >
+              経験年数
             </label>
             <input
               type="number"
               id="experienceYears"
-              min={0}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-smooth"
-              placeholder="3"
-              {...register("experienceYears", { valueAsNumber: true })}
+              value={formData.experienceYears}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  experienceYears: e.target.valueAsNumber,
+                })
+              }
+              min="0"
+              max="50"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              required
             />
-            <p className="mt-2 text-sm text-muted">
-              年単位で入力してください
-            </p>
-            {errors.experienceYears && (
-              <p className="mt-2 text-sm text-red-500">{errors.experienceYears.message}</p>
-            )}
           </div>
 
-          {/* 募集人数 */}
-          <div className="card">
-            <label htmlFor="numberOfOpenings" className="block heading text-lg mb-4">
+          <div>
+            <label
+              htmlFor="numberOfOpenings"
+              className="block text-sm font-medium text-gray-700"
+            >
               募集人数
             </label>
             <input
               type="number"
               id="numberOfOpenings"
-              min={1}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-smooth"
-              placeholder="1"
-              {...register("numberOfOpenings", { valueAsNumber: true })}
+              value={formData.numberOfOpenings}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  numberOfOpenings: e.target.valueAsNumber,
+                })
+              }
+              min="1"
+              max="999"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              required
             />
-            {errors.numberOfOpenings && (
-              <p className="mt-2 text-sm text-red-500">{errors.numberOfOpenings.message}</p>
-            )}
           </div>
 
-          {/* 雇用形態 */}
-          <div className="card">
-            <label htmlFor="employmentType" className="block heading text-lg mb-4">
+          <div>
+            <label
+              htmlFor="employmentType"
+              className="block text-sm font-medium text-gray-700"
+            >
               雇用形態
             </label>
-            <select
+            <input
+              type="text"
               id="employmentType"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-smooth"
-              {...register("employmentType")}
-            >
-              <option value="">選択してください</option>
-              <option value="正社員">正社員</option>
-              <option value="契約社員">契約社員</option>
-              <option value="業務委託">業務委託</option>
-              <option value="パートタイム">パートタイム</option>
-            </select>
-            {errors.employmentType && (
-              <p className="mt-2 text-sm text-red-500">{errors.employmentType.message}</p>
-            )}
+              value={formData.employmentType}
+              onChange={(e) =>
+                setFormData({ ...formData, employmentType: e.target.value })
+              }
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+              required
+            />
           </div>
 
-          {/* 送信ボタン */}
-          <div className="flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="btn btn-secondary"
-            >
-              キャンセル
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "更新中..." : "更新する"}
-            </button>
+          <div className="flex justify-end space-x-4">
+            <Link href="/company-settings/job-requirements">
+              <CancelButton>キャンセル</CancelButton>
+            </Link>
+            <Button type="submit" disabled={loading}>
+              {loading ? "保存中..." : "保存"}
+            </Button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }
